@@ -1,0 +1,77 @@
+<!doctype html>
+<!--
+  troofy's sign-in redirect page (see docs/social.md). Social platforms send the
+  browser here after the person signs in, with ?code=…&state=… (or ?error=…).
+  The page hands them to the troofy app through troofy://oauth/callback. It
+  sends nothing anywhere else and loads nothing.
+
+  Published on the public releases repo's GitHub Pages, at
+  https://baygut.github.io/troofy-releases/auth/ (SOCIAL_REDIRECT_URI in
+  packages/contracts/src/social.ts). Each platform's developer app lists
+  that address as its redirect URI.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'"
+    />
+    <title>Back to troofy</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f3f3f6;
+        color: #0b0b12;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #0b0b12; color: #f3f3f6; }
+      }
+      main { max-width: 26rem; padding: 2rem; text-align: center; }
+      h1 { font-size: 22px; margin: 0 0 0.5rem; }
+      p { margin: 0 0 1.25rem; opacity: 0.75; }
+      a.button {
+        display: inline-block;
+        padding: 0.6rem 1.1rem;
+        border-radius: 10px;
+        background: #ff5b2e;
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 id="title">Back to troofy…</h1>
+      <p id="text">If troofy doesn't open by itself, press the button.</p>
+      <a id="open" class="button" href="troofy://oauth/callback">Open troofy</a>
+    </main>
+    <script>
+      (() => {
+        const params = new URLSearchParams(window.location.search);
+        const back = new URLSearchParams();
+        ["code", "state", "error", "error_reason"].forEach((name) => {
+          const value = params.get(name);
+          if (value) back.set(name, name === "code" ? value.replace(/#_$/, "") : value);
+        });
+        const link = `troofy://oauth/callback?${back.toString()}`;
+        document.getElementById("open").setAttribute("href", link);
+        if (params.get("error")) {
+          document.getElementById("title").textContent = "Sign-in canceled";
+          document.getElementById("text").textContent = "troofy will say so. You can close this tab.";
+        }
+        // The code is only good once, and only for troofy: it leaves the address bar.
+        window.history.replaceState(null, "", window.location.pathname);
+        window.location.href = link;
+      })();
+    </script>
+  </body>
+</html>
